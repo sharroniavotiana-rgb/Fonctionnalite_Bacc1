@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Calcul de Note Finale</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .difference-detail {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .pair-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .pair-list li {
+            padding: 3px 0;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        .badge-resolution {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+        }
+        .btn-calcul-auto {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .btn-calcul-auto:hover {
+            background-color: #218838;
+        }
+        .info-badge {
+            background-color: #17a2b8;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Calcul de la Note Finale</h2>
+        <a href="/" class="btn btn-secondary mb-3">Retour</a>
+        
+        <!-- Messages d'erreur -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Erreur!</strong> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <!-- Messages de succès -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Succès!</strong> <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <div class="row">
+            <!-- Formulaire de sélection -->
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Sélection</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Formulaire de sélection candidat/matière -->
+                        <form id="selectionForm">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Candidat</label>
+                                <select name="candidatId" id="candidatSelect" class="form-select" required>
+                                    <option value="">-- Sélectionner un candidat --</option>
+                                    <option th:each="c : ${candidats}" 
+                                            th:value="${c.id}" 
+                                            th:text="${c.prenom + ' ' + c.nom}"
+                                            th:selected="${candidat != null and c.id == candidat.id}"></option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Matière</label>
+                                <select name="matiereId" id="matiereSelect" class="form-select" required>
+                                    <option value="">-- Sélectionner une matière --</option>
+                                    <option th:each="m : ${matieres}" 
+                                            th:value="${m.id}" 
+                                            th:text="${m.nom}"
+                                            th:selected="${matiere != null and m.id == matiere.id}"></option>
+                                </select>
+                            </div>
+                            
+                            <button type="button" id="btnVerifierNotes" class="btn btn-info w-100 mb-3">
+                                <i class="bi bi-search"></i> Vérifier les notes existantes
+                            </button>
+                        </form>
+                        
+                        <!-- Message si des notes existent -->
+                        <div id="notesExistantesMessage" style="display: none;" class="alert alert-success mt-3">
+                            <strong>✓ Notes existantes trouvées !</strong>
+                            <p id="notesExistantesDetail" class="mb-0 mt-2"></p>
+                            <button id="btnCalculAuto" class="btn-calcul-auto mt-3">
+                                Calculer avec ces notes
+                            </button>
+                        </div>
+                        
+                        <!-- Formulaire de saisie manuelle (caché par défaut) -->
+                        <div id="saisieManuelle" style="display: none;">
+                            <hr>
+                            <h6 class="text-muted mb-3">Ou saisir de nouvelles notes :</h6>
+                            <form action="/calcul/resultat" method="post" id="saisieForm">
+                                <input type="hidden" name="candidatId" id="hiddenCandidatId">
+                                <input type="hidden" name="matiereId" id="hiddenMatiereId">
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Notes <small class="text-muted">(séparées par ;)</small></label>
+                                    <input type="text" name="notesSaisies" id="notesInput" class="form-control" 
+                                           placeholder="ex: 14;12;15" 
+                                           th:value="${notesSaisies}">
+                                    <div id="notesFeedback" class="invalid-feedback"></div>
+                                    <small class="text-muted">Entrez les notes séparées par des points-virgules (ex: 14;12;15)</small>
+                                    <div id="differenceInfo" class="text-info mt-2 fw-bold"></div>
+                                    <div id="detailsDifference" class="small text-secondary mt-1"></div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-calculator"></i> Calculer avec ces nouvelles notes
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notes existantes (affichées automatiquement) -->
+                <div class="card mt-3 shadow" th:if="${notesExistantes != null and !notesExistantes.isEmpty()}">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Notes existantes pour ce candidat</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Matière</th>
+                                    <th>Correcteur</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="note : ${notesExistantes}">
+                                    <td th:text="${note.matiere.nom}"></td>
+                                    <td th:text="${note.correcteur.prenom + ' ' + note.correcteur.nom}"></td>
+                                    <td><span class="badge bg-secondary" th:text="${note.valeur}"></span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Résultat du calcul -->
+            <div class="col-md-6" th:if="${noteFinale != null}">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Résultat du calcul</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th style="width: 40%">Candidat:</th>
+                                <td th:text="${candidat.prenom + ' ' + candidat.nom}"></td>
+                            </tr>
+                            <tr>
+                                <th>Matière:</th>
+                                <td th:text="${matiere.nom}"></td>
+                            </tr>
+                            <tr>
+                                <th>Notes utilisées:</th>
+                                <td>
+                                    <span th:text="${notesSaisies}"></span>
+                                    <span class="badge bg-secondary ms-2" th:text="${nbNotes + ' notes'}"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Type de calcul:</th>
+                                <td>
+                                    <span class="badge bg-info" th:text="${typeCalcul}"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Différence calculée:</th>
+                                <td>
+                                    <span class="badge bg-info text-dark fs-6 p-2" th:text="${differenceCalculee}"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Résolution appliquée:</th>
+                                <td>
+                                    <span class="badge bg-warning text-dark badge-resolution" th:text="${resolutionAppliquee}"></span>
+                                </td>
+                            </tr>
+                            <tr class="table-primary">
+                                <th><h5 class="mb-0">Note finale:</h5></th>
+                                <td>
+                                    <h2 class="text-primary mb-0" th:text="${noteFinale}"></h2>
+                                    <small class="text-muted">/20</small>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- Détail du calcul des différences -->
+                        <div class="difference-detail mt-3" th:if="${detailsPaires != null}">
+                            <h6 class="fw-bold">Détail du calcul de la différence :</h6>
+                            <ul class="pair-list">
+                                <li th:each="detail : ${detailsPaires}" th:text="${detail}"></li>
+                            </ul>
+                            <p class="fw-bold text-end mb-0">
+                                Total = <span class="text-primary" th:text="${differenceCalculee}"></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const candidatSelect = document.getElementById('candidatSelect');
+            const matiereSelect = document.getElementById('matiereSelect');
+            const btnVerifier = document.getElementById('btnVerifierNotes');
+            const notesExistantesMessage = document.getElementById('notesExistantesMessage');
+            const saisieManuelle = document.getElementById('saisieManuelle');
+            const notesInput = document.getElementById('notesInput');
+            const hiddenCandidatId = document.getElementById('hiddenCandidatId');
+            const hiddenMatiereId = document.getElementById('hiddenMatiereId');
+            const btnCalculAuto = document.getElementById('btnCalculAuto');
+            const notesFeedback = document.getElementById('notesFeedback');
+            const differenceInfo = document.getElementById('differenceInfo');
+            const detailsDifference = document.getElementById('detailsDifference');
+            
+            // Variables pour stocker les notes existantes
+            let notesExistantesData = null;
+            
+            // Fonction pour vérifier les notes existantes
+            async function verifierNotesExistantes() {
+                const candidatId = candidatSelect.value;
+                const matiereId = matiereSelect.value;
+                
+                if (!candidatId || !matiereId) {
+                    alert('Veuillez sélectionner un candidat et une matière');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/calcul/notes-candidat?candidatId=${candidatId}&matiereId=${matiereId}`);
+                    const notes = await response.json();
+                    
+                    if (notes && notes.length > 0) {
+                        // Des notes existent
+                        notesExistantesData = notes;
+                        const notesListe = notes.map(n => n.valeur).join('; ');
+                        const correcteursListe = notes.map(n => n.correcteur.prenom + ' ' + n.correcteur.nom).join(', ');
+                        
+                        document.getElementById('notesExistantesDetail').innerHTML = `
+                            <strong>Notes:</strong> ${notesListe}<br>
+                            <strong>Correcteurs:</strong> ${correcteursListe}<br>
+                            <strong>Nombre de notes:</strong> ${notes.length}
+                        `;
+                        
+                        notesExistantesMessage.style.display = 'block';
+                        saisieManuelle.style.display = 'block';
+                        
+                        // Pré-remplir les champs cachés
+                        hiddenCandidatId.value = candidatId;
+                        hiddenMatiereId.value = matiereId;
+                    } else {
+                        // Aucune note existante
+                        notesExistantesMessage.style.display = 'none';
+                        saisieManuelle.style.display = 'block';
+                        hiddenCandidatId.value = candidatId;
+                        hiddenMatiereId.value = matiereId;
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors de la vérification des notes');
+                }
+            }
+            
+            // Bouton pour calculer automatiquement avec les notes existantes
+            if (btnCalculAuto) {
+                btnCalculAuto.addEventListener('click', function() {
+                    if (notesExistantesData && notesExistantesData.length > 0) {
+                        // Créer un formulaire temporaire pour soumettre les notes existantes
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '/calcul/resultat-auto';
+                        
+                        const inputCandidat = document.createElement('input');
+                        inputCandidat.type = 'hidden';
+                        inputCandidat.name = 'candidatId';
+                        inputCandidat.value = candidatSelect.value;
+                        
+                        const inputMatiere = document.createElement('input');
+                        inputMatiere.type = 'hidden';
+                        inputMatiere.name = 'matiereId';
+                        inputMatiere.value = matiereSelect.value;
+                        
+                        form.appendChild(inputCandidat);
+                        form.appendChild(inputMatiere);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            }
+            
+            // Bouton pour vérifier les notes
+            if (btnVerifier) {
+                btnVerifier.addEventListener('click', verifierNotesExistantes);
+            }
+            
+            // Validation des notes saisies manuellement
+            if (notesInput) {
+                notesInput.addEventListener('input', function() {
+                    validateAndCalculate(this);
+                });
+            }
+            
+            // Mettre à jour les champs cachés quand la sélection change
+            if (candidatSelect) {
+                candidatSelect.addEventListener('change', function() {
+                    if (hiddenCandidatId) hiddenCandidatId.value = this.value;
+                });
+            }
+            
+            if (matiereSelect) {
+                matiereSelect.addEventListener('change', function() {
+                    if (hiddenMatiereId) hiddenMatiereId.value = this.value;
+                });
+            }
+            
+            // Fonction de validation et calcul
+            function validateAndCalculate(input) {
+                const notesStr = input.value.trim();
+                if (!notesStr) {
+                    clearFeedback(input);
+                    return;
+                }
+                
+                const notesArray = notesStr.split(';').map(n => n.trim());
+                let isValid = true;
+                let errorMessage = '';
+                const notes = [];
+                
+                for (let i = 0; i < notesArray.length; i++) {
+                    const noteStr = notesArray[i];
+                    if (noteStr === '') {
+                        isValid = false;
+                        errorMessage = 'Format invalide: note vide détectée';
+                        break;
+                    }
+                    
+                    const noteNum = parseFloat(noteStr);
+                    if (isNaN(noteNum)) {
+                        isValid = false;
+                        errorMessage = `"${noteStr}" n'est pas un nombre valide`;
+                        break;
+                    }
+                    
+                    if (noteNum < 0 || noteNum > 20) {
+                        isValid = false;
+                        errorMessage = `La note ${noteNum} doit être entre 0 et 20`;
+                        break;
+                    }
+                    
+                    notes.push(noteNum);
+                }
+                
+                if (!isValid) {
+                    input.classList.add('is-invalid');
+                    input.classList.remove('is-valid');
+                    if (notesFeedback) {
+                        notesFeedback.textContent = errorMessage;
+                        notesFeedback.style.display = 'block';
+                    }
+                    hideDifference();
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                    if (notesFeedback) {
+                        notesFeedback.style.display = 'none';
+                    }
+                    
+                    if (notes.length >= 2) {
+                        calculateAndDisplayDifference(notes, input);
+                    } else {
+                        hideDifference();
+                    }
+                }
+            }
+            
+            function calculateAndDisplayDifference(notes, input) {
+                let difference = 0;
+                let details = [];
+                
+                for (let i = 0; i < notes.length; i++) {
+                    for (let j = i + 1; j < notes.length; j++) {
+                        let diff = Math.abs(notes[i] - notes[j]);
+                        difference += diff;
+                        details.push(`${notes[i].toFixed(1)} - ${notes[j].toFixed(1)} = ${diff.toFixed(1)}`);
+                    }
+                }
+                
+                if (differenceInfo) {
+                    differenceInfo.textContent = `Différence calculée : ${difference.toFixed(2)}`;
+                }
+                
+                if (detailsDifference) {
+                    if (details.length > 0) {
+                        detailsDifference.innerHTML = '<strong>Détail :</strong> ' + details.join(' | ');
+                    } else {
+                        detailsDifference.innerHTML = '';
+                    }
+                }
+            }
+            
+            function hideDifference() {
+                if (differenceInfo) differenceInfo.textContent = '';
+                if (detailsDifference) detailsDifference.innerHTML = '';
+            }
+            
+            function clearFeedback(input) {
+                input.classList.remove('is-invalid', 'is-valid');
+                if (notesFeedback) notesFeedback.style.display = 'none';
+                hideDifference();
+            }
+        });
+    </script>
+</body>
+</html>
