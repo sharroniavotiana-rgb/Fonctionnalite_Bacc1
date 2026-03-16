@@ -44,10 +44,14 @@
             margin-bottom: 10px;
             display: inline-block;
         }
+        .h1{
+            color: crimson;
+        }
     </style>
 </head>
 <body>
     <div class="container mt-4">
+        <h1>ETU3543</h1>
         <h2>Calcul de la Note Finale</h2>
         <a href="/" class="btn btn-secondary mb-3">Retour</a>
         
@@ -294,11 +298,11 @@
                 }
             }
             
-            // Bouton pour calculer automatiquement avec les notes existantes
+          
             if (btnCalculAuto) {
                 btnCalculAuto.addEventListener('click', function() {
                     if (notesExistantesData && notesExistantesData.length > 0) {
-                        // Créer un formulaire temporaire pour soumettre les notes existantes
+                      
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.action = '/calcul/resultat-auto';

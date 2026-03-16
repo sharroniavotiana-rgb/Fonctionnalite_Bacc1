@@ -8,7 +8,7 @@ REM Configuration - A MODIFIER SELON TES PARAMETRES
 set PGHOST=localhost
 set PGPORT=5432
 set PGUSER=postgres
-set PGDATABASE=Oui
+set PGDATABASE=Bacc
 
 REM Demander le mot de passe (ou le definir en variable d'env)
 set /p PGPASSWORD="Mot de passe PostgreSQL : "
