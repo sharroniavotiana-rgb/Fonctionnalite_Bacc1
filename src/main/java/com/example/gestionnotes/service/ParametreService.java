@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -88,17 +90,68 @@ public class ParametreService {
         };
     }
     
-    /**
-     * Trouve le paramètre applicable pour une différence donnée
-     */
-    public Parametre trouverParametreApplicable(Long matiereId, Double difference) {
-        List<Parametre> parametres = findByMatiereId(matiereId);
-        
-        for (Parametre p : parametres) {
-            if (comparer(difference, p.getDifference(), p.getOperateur().getSymbole())) {
-                return p;
-            }
-        }
+ public Parametre trouverParametreApplicable(Long matiereId, Double difference) {
+    List<Parametre> tousParametres = findByMatiereId(matiereId);
+    
+    if (tousParametres.isEmpty()) {
         return null;
     }
+    
+    
+    List<Parametre> applicables = new ArrayList<>();
+    for (Parametre p : tousParametres) {
+        if (comparer(difference, p.getDifference(), p.getOperateur().getSymbole())) {
+            applicables.add(p);
+        }
+    }
+    
+    
+    if (applicables.isEmpty()) {
+        return null;
+    }
+    
+    
+    if (applicables.size() == 1) {
+        return applicables.get(0);
+    }
+    
+    
+    List<ParametreAvecEcart> avecEcarts = new ArrayList<>();
+    for (Parametre p : applicables) {
+        double ecart = Math.abs(difference - p.getDifference());
+        avecEcarts.add(new ParametreAvecEcart(p, ecart));
+    }
+    
+    
+    double minEcart = avecEcarts.stream()
+            .mapToDouble(pe -> pe.ecart)
+            .min()
+            .orElse(Double.MAX_VALUE);
+    
+    
+    List<ParametreAvecEcart> meilleursEcarts = avecEcarts.stream()
+            .filter(pe -> pe.ecart == minEcart)
+            .toList();
+    
+    
+    if (meilleursEcarts.size() == 1) {
+        return meilleursEcarts.get(0).parametre;
+    }
+    
+    
+    return meilleursEcarts.stream()
+            .map(pe -> pe.parametre)
+            .min(Comparator.comparingDouble(Parametre::getDifference))
+            .orElse(null);
+}
+
+private static class ParametreAvecEcart {
+    Parametre parametre;
+    double ecart;
+    
+    ParametreAvecEcart(Parametre parametre, double ecart) {
+        this.parametre = parametre;
+        this.ecart = ecart;
+    }
+}
 }
