@@ -55,9 +55,7 @@ public class CorrecteurService {
         }
     }
     
-    /**
-     * Vérifie si assez de correcteurs sont disponibles
-     */
+
     public void validateEnoughCorrecteurs(int nombreRequis) {
         long nombreDisponible = correcteurRepository.count();
         if (nombreDisponible < nombreRequis) {
@@ -68,17 +66,13 @@ public class CorrecteurService {
         }
     }
     
-    /**
-     * Récupère les premiers correcteurs (pour l'assignation par défaut)
-     */
+   
     public List<Correcteur> getFirstCorrecteurs(int nombre) {
         validateEnoughCorrecteurs(nombre);
         return correcteurRepository.findAll().subList(0, nombre);
     }
     
-    /**
-     * Récupère une liste de correcteurs par leurs IDs
-     */
+
     public List<Correcteur> findAllById(List<Long> ids) {
         return correcteurRepository.findAllById(ids);
     }

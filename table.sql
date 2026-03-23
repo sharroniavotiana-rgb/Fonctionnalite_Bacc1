@@ -100,4 +100,3 @@ INSERT INTO note (id_candidat, id_matiere, id_correcteur, note) VALUES
 
 
 
-
