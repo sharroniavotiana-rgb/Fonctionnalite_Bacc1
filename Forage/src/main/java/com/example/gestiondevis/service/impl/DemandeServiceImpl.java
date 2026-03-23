@@ -1,15 +1,21 @@
+// service/impl/DemandeServiceImpl.java
 package com.example.gestiondevis.service.impl;
 
 import com.example.gestiondevis.dto.DemandeDTO;
 import com.example.gestiondevis.entity.Client;
 import com.example.gestiondevis.entity.Demande;
+import com.example.gestiondevis.entity.DemandeStatus;
+import com.example.gestiondevis.entity.Status;
 import com.example.gestiondevis.repository.ClientRepository;
 import com.example.gestiondevis.repository.DemandeRepository;
+import com.example.gestiondevis.repository.DemandeStatusRepository;
+import com.example.gestiondevis.repository.StatusRepository;
 import com.example.gestiondevis.service.DemandeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +26,8 @@ public class DemandeServiceImpl implements DemandeService {
     
     private final DemandeRepository demandeRepository;
     private final ClientRepository clientRepository;
+    private final DemandeStatusRepository demandeStatusRepository;
+    private final StatusRepository statusRepository;
     
     @Override
     public List<DemandeDTO> findAllDemandes() {
@@ -30,21 +38,56 @@ public class DemandeServiceImpl implements DemandeService {
     
     @Override
     public DemandeDTO findDemandeById(Long id) {
-        Demande demande = demandeRepository.findByIdWithClient(id);
-        if (demande == null) {
-            throw new RuntimeException("Demande non trouvée avec l'id: " + id);
+        Demande demande = demandeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Demande non trouvée avec l'id: " + id));
+        
+        DemandeDTO dto = convertToDTO(demande);
+        
+        // Récupérer le dernier statut de la demande
+        List<DemandeStatus> statusList = demandeStatusRepository.findByDemandeIdOrderByDateDesc(id);
+        if (!statusList.isEmpty()) {
+            dto.setStatusLibelle(statusList.get(0).getStatus().getLibelle());
         }
-        return convertToDTO(demande);
+        
+        return dto;
     }
     
     @Override
+    @Transactional
     public DemandeDTO saveDemande(DemandeDTO demandeDTO) {
+        // 1. Récupérer le client
         Client client = clientRepository.findById(demandeDTO.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client non trouvé avec l'id: " + demandeDTO.getClientId()));
         
-        Demande demande = convertToEntity(demandeDTO, client);
+        // 2. Créer la demande
+        Demande demande = new Demande();
+        demande.setDate(demandeDTO.getDate());
+        demande.setLieu(demandeDTO.getLieu());
+        demande.setDistrict(demandeDTO.getDistrict());
+        demande.setClient(client);
+        
+        // 3. Sauvegarder la demande
         Demande savedDemande = demandeRepository.save(demande);
-        return convertToDTO(savedDemande);
+        
+        // 4. Récupérer le statut par défaut (par exemple "Créé" avec id=1)
+        Status defaultStatus = statusRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Statut par défaut non trouvé"));
+        
+        // 5. Créer l'entrée dans demande_status
+        DemandeStatus demandeStatus = new DemandeStatus();
+        demandeStatus.setDemande(savedDemande);
+        demandeStatus.setStatus(defaultStatus);
+        demandeStatus.setDate(LocalDateTime.now());
+        demandeStatus.setCommentaire("Demande créée");
+        
+        // 6. Sauvegarder le statut
+        demandeStatusRepository.save(demandeStatus);
+        
+        // 7. Convertir en DTO et retourner
+        DemandeDTO resultDTO = convertToDTO(savedDemande);
+        resultDTO.setStatusLibelle(defaultStatus.getLibelle());
+        
+        return resultDTO;
     }
     
     @Override
@@ -97,15 +140,5 @@ public class DemandeServiceImpl implements DemandeService {
         dto.setClientId(demande.getClient().getId());
         dto.setClientNom(demande.getClient().getNom());
         return dto;
-    }
-    
-    private Demande convertToEntity(DemandeDTO dto, Client client) {
-        Demande demande = new Demande();
-        demande.setId(dto.getId());
-        demande.setDate(dto.getDate());
-        demande.setLieu(dto.getLieu());
-        demande.setDistrict(dto.getDistrict());
-        demande.setClient(client);
-        return demande;
     }
 }

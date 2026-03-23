@@ -98,16 +98,17 @@ public class DemandeController {
     }
     
     @GetMapping("/view/{id}")
-    public String viewDemande(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        try {
-            DemandeDTO demande = demandeService.findDemandeById(id);
-            model.addAttribute("demande", demande);
-            return "demande/view";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Demande non trouvée");
-            return "redirect:/demandes";
-        }
+public String viewDemande(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+    try {
+        DemandeDTO demande = demandeService.findDemandeById(id);
+        model.addAttribute("demande", demande);
+        return "demande/view";
+    } catch (Exception e) {
+        redirectAttributes.addFlashAttribute("error", "Demande non trouvée");
+        return "redirect:/demandes";
     }
+}
+
     
     @GetMapping("/client/{clientId}")
     public String listDemandesByClient(@PathVariable Long clientId, Model model, RedirectAttributes redirectAttributes) {

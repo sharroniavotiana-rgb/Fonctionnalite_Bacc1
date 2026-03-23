@@ -1,4 +1,12 @@
 
+DROP TABLE status CASCADE;
+DROP TABLE types_devis CASCADE;
+DROP TABLE demandes CASCADE;
+DROP TABLE devis CASCADE;
+DROP TABLE details_devis CASCADE;
+DROP TABLE clients CASCADE;
+DROP TABLE demande_status CASCADE;
+
 CREATE TABLE clients (
     id BIGSERIAL PRIMARY KEY,
     nom VARCHAR(255) NOT NULL,
@@ -76,14 +84,12 @@ INSERT INTO clients (nom, contact) VALUES
 
 -- Status
 INSERT INTO status (libelle) VALUES
-('En attente'),
-('En cours'),
+('Créé'),
 ('Validé'),
 ('Rejeté');
 
 -- Types de devis
 INSERT INTO types_devis (libelle) VALUES
-('Etude'),
 ('Etude'),
 ('Forage');
 
@@ -115,10 +121,7 @@ UPDATE devis SET montant_total = (
     WHERE details_devis.devis_id = devis.id
 );
 
--- Demande status
 INSERT INTO demande_status (date, commentaire, demande_id, status_id) VALUES
 ('2024-01-10 08:00:00', 'Demande reçue',              1, 1),
-('2024-01-20 10:30:00', 'Dossier en cours d analyse', 1, 2),
-('2024-02-05 09:00:00', 'Demande reçue',              2, 1),
-('2024-02-15 14:00:00', 'Devis validé par le client', 2, 3),
-('2024-03-15 11:00:00', 'Demande reçue',              3, 1);
+('2024-01-20 10:30:00', 'Dossier en cours d analyse', 2, 2),
+('2024-02-05 09:00:00', 'Demande reçue',              3, 1);
