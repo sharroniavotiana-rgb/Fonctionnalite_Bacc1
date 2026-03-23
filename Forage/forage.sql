@@ -83,9 +83,9 @@ INSERT INTO status (libelle) VALUES
 
 -- Types de devis
 INSERT INTO types_devis (libelle) VALUES
-('Devis initial'),
-('Devis rectificatif'),
-('Devis complémentaire');
+('Etude'),
+('Etude'),
+('Forage');
 
 -- Demandes
 INSERT INTO demandes (date, lieu, district, client_id) VALUES
