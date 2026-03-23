@@ -32,5 +32,7 @@ public class DemandeDTO {
     @NotNull(message = "Le client est obligatoire")
     private Long clientId;
     
-    private String clientNom;
+    private String clientNom;   
+ 
+    private String statusLibelle;
 }

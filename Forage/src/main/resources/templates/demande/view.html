@@ -1,3 +1,4 @@
+<!-- templates/demande/view.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
@@ -12,7 +13,7 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header bg-primary text-white">
                         <h3>Détails de la Demande</h3>
                     </div>
                     <div class="card-body">
@@ -39,7 +40,23 @@
                                    th:text="${demande.clientNom}"></a>
                             </div>
                         </div>
-                        <div class="d-flex justify-content-between">
+                        
+                        <!-- AFFICHAGE DU STATUT - Version corrigée -->
+                        <div class="row mb-3">
+                            <div class="col-md-3 fw-bold">Statut:</div>
+                            <div class="col-md-9">
+                                <span class="badge" 
+                                      th:class="${demande.statusLibelle == 'Créé'} ? 'bg-info' : 
+                                                (${demande.statusLibelle == 'Validé'} ? 'bg-success' : 
+                                                (${demande.statusLibelle == 'Rejeté'} ? 'bg-danger' : 'bg-secondary'))"
+                                      style="font-size: 1rem; padding: 8px 15px;">
+                                    <span th:text="${demande.statusLibelle != null ? demande.statusLibelle : 'Non défini'}"></span>
+                                </span>
+                            </div>
+                        </div>
+                        <!-- FIN AFFICHAGE STATUT -->
+                        
+                        <div class="d-flex justify-content-between mt-4">
                             <a th:href="@{/demandes}" class="btn btn-secondary">Retour à la liste</a>
                             <div>
                                 <a th:href="@{/demandes/edit/{id}(id=${demande.id})}" 
