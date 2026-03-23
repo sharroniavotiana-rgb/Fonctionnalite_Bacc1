@@ -16,7 +16,7 @@ public class CandidatService {
     @Autowired
     private CandidatRepository candidatRepository;
     
-    // ============= Méthodes CRUD =============
+    
     
     public List<Candidat> findAll() {
         return candidatRepository.findAll();
@@ -31,7 +31,6 @@ public class CandidatService {
     }
     
     public Candidat save(Candidat candidat) {
-        // Tu pourras ajouter de la validation ici plus tard
         return candidatRepository.save(candidat);
     }
     
@@ -43,19 +42,13 @@ public class CandidatService {
         return candidatRepository.existsById(id);
     }
     
-    // ============= Méthodes métier spécifiques =============
     
-    /**
-     * Récupère un candidat ou lance une exception s'il n'existe pas
-     */
     public Candidat getOrThrow(Long id) {
         return findById(id)
                 .orElseThrow(() -> new RuntimeException("Candidat non trouvé avec l'id: " + id));
     }
     
-    /**
-     * Vérifie si un candidat existe
-     */
+    
     public void validateExists(Long id) {
         if (!existsById(id)) {
             throw new RuntimeException("Candidat non trouvé avec l'id: " + id);

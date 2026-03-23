@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Clients - Gestion Devis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Liste des Clients</h1>
+            <div>
+                <a th:href="@{/clients/new}" class="btn btn-primary">Nouveau Client</a>
+                <a th:href="@{/demandes}" class="btn btn-secondary">Voir Demandes</a>
+            </div>
+        </div>
+        
+        <!-- Formulaire de recherche -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form th:action="@{/clients/search}" method="get" class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" name="nom" class="form-control" 
+                               placeholder="Rechercher par nom..." th:value="${searchNom}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-outline-primary w-100">Rechercher</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Messages d'alerte -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <!-- Tableau des clients -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Contact</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="client : ${clients}">
+                        <td th:text="${client.id}">1</td>
+                        <td th:text="${client.nom}">Nom Client</td>
+                        <td th:text="${client.contact}">Contact Client</td>
+                        <td>
+                            <a th:href="@{/clients/view/{id}(id=${client.id})}" 
+                               class="btn btn-sm btn-info">Voir</a>
+                            <a th:href="@{/clients/edit/{id}(id=${client.id})}" 
+                               class="btn btn-sm btn-warning">Modifier</a>
+                            <a th:href="@{/clients/delete/{id}(id=${client.id})}" 
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce client ?')">Supprimer</a>
+                            <a th:href="@{/demandes/client/{clientId}(clientId=${client.id})}" 
+                               class="btn btn-sm btn-secondary">Voir Demandes</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${clients.empty}">
+                        <td colspan="4" class="text-center">Aucun client trouvé</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

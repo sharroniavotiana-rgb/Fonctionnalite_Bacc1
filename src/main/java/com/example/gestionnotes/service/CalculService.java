@@ -32,10 +32,10 @@ public class CalculService {
     @Autowired
     private ValidationService validationService;
     
-    /**
+    /*
      * Calcule la différence entre plusieurs notes
-     * Pour 2 notes: |note1 - note2|
-     * Pour plus de 2 notes: somme de toutes les différences entre chaque paire
+     * Raha note 2 de entre anizy 2 
+     * Raha entre note + de 2 de ny somme anle difference anzareo
      */
     public Double calculerDifference(List<Double> notes) {
         if (notes == null || notes.size() < 2) {
@@ -55,7 +55,7 @@ public class CalculService {
     }
     
     /**
-     * Calcule la différence et retourne aussi les détails des paires
+     * Calcule la différence et retourne aussi les détails des paires de eealefa any am classe interne ResultatDifference
      */
     public ResultatDifference calculerDifferenceAvecDetails(List<Double> notes) {
         if (notes == null || notes.size() < 2) {
@@ -78,7 +78,7 @@ public class CalculService {
     }
     
     /**
-     * Calcule la moyenne d'une liste de notes
+     * Calcule anah moyenne amle note raha moyenne no reslution 
      */
     public Double calculerMoyenne(List<Double> notes) {
         if (notes == null || notes.isEmpty()) {
@@ -91,7 +91,7 @@ public class CalculService {
     }
     
     /**
-     * Applique la résolution (plus petit, plus grand, moyenne)
+     * mi appliquer ny resolution zay mifandraiky am parametre 
      */
     public Double appliquerResolution(List<Double> notes, String resolution) {
         if (notes == null || notes.isEmpty()) {
@@ -110,7 +110,7 @@ public class CalculService {
     }
     
     /**
-     * Détermine la note finale selon les règles paramétrées
+     * Détermine la note finale selon les parametres 
      */
     public Double determinerNoteFinale(Long idCandidat, Long idMatiere) {
         
@@ -166,9 +166,7 @@ public class CalculService {
         return determinerNoteFinale(idCandidat, idMatiere);
     }
     
-    /**
-     * Version simplifiée avec correcteurs par défaut
-     */
+
     @Transactional
     public Double traiterSaisieNotes(String saisieNotes, Long idCandidat, Long idMatiere) {
         
